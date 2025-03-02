@@ -4,18 +4,24 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 
 const app = express();
-const PORT = process.env.PORT;
-const MONGO_URI = process.env.MONGO_URI;// Use .env or fallback
+const PORT = process.env.PORT || 3000; // Default to 3000 if PORT is missing
+const MONGO_URI = process.env.MONGO_URI; // Use .env variable
 
+// Middleware
 app.use(cors());
 app.use(express.json());
+
+// ✅ Root Route to Prevent "Cannot GET /"
+app.get("/", (req, res) => {
+    res.send("Welcome to PsyGuage Backend API!");
+});
 
 // ✅ Connect to MongoDB
 mongoose.connect(MONGO_URI)
     .then(() => console.log("✅ MongoDB connected"))
     .catch(err => {
         console.error("❌ MongoDB connection error:", err);
-        process.exit(1); // Exit process on connection failure
+        process.exit(1); // Exit process on failure
     });
 
 // ✅ Define User Schema and Model
@@ -55,12 +61,12 @@ app.post("/api/register", async (req, res) => {
         await newUser.save();
         res.status(201).json(newUser);
     } catch (error) {
-        console.error("Error registering user:", error);
+        console.error("❌ Error registering user:", error);
         res.status(500).json({ message: "Server error" });
     }
 });
 
-// ✅ Endpoint to save score
+// ✅ Save game scores
 app.post("/api/scores", async (req, res) => {
     try {
         const { gameName, name, email, score, responseSymbolTime, correctSymbolCount } = req.body;
@@ -73,12 +79,12 @@ app.post("/api/scores", async (req, res) => {
         await newScore.save();
         res.status(201).json(newScore);
     } catch (error) {
-        console.error("Error saving score:", error);
+        console.error("❌ Error saving score:", error);
         res.status(500).json({ message: "Server error" });
     }
 });
 
-// ✅ Endpoint to retrieve scores by email
+// ✅ Retrieve scores by email
 app.get("/api/getscores", async (req, res) => {
     try {
         const { email } = req.query;
@@ -94,12 +100,12 @@ app.get("/api/getscores", async (req, res) => {
 
         res.json(scores);
     } catch (error) {
-        console.error("Error fetching scores:", error);
+        console.error("❌ Error fetching scores:", error);
         res.status(500).json({ message: "Server error" });
     }
 });
 
-// ✅ Start Server with Error Handling for Port Conflicts
+// ✅ Start Server with Error Handling
 app.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);
 }).on("error", (err) => {
