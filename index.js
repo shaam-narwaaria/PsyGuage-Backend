@@ -116,8 +116,6 @@
 //     }
 // });
 
-
-
 require("dotenv").config(); // Load environment variables from .env
 const express = require("express");
 const mongoose = require("mongoose");
@@ -132,13 +130,20 @@ const MONGO_URI = process.env.MONGO_URI;
 const JWT_SECRET = process.env.JWT_SECRET || "shaam-narwaaria";
 
 // Middleware
-app.use(cors({ origin: "http://localhost:3000", credentials: true }));
+app.use(cors({
+    origin: [
+        "http://localhost:3000",
+        "https://psyguage.vercel.app",
+        "https://psy-guage-frontend.vercel.app"
+    ],
+    credentials: true
+}));
 app.use(express.json());
 app.use(cookieParser());
 
 // ✅ Root Route
 app.get("/", (req, res) => {
-    res.send("Welcome to PsyGuage Backend API!");
+    res.send("This is PsyGuage Backend API!");
 });
 
 // ✅ Connect to MongoDB
@@ -203,7 +208,12 @@ app.post("/api/auth/login", async (req, res) => {
         if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
 
         const token = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: "1h" });
-        res.cookie("token", token, { httpOnly: true }).json({ message: "Login successful" });
+        res.cookie("token", token, {
+            httpOnly: true,
+            sameSite: "None",
+            secure: true,
+            domain: "psyguage-backend.onrender.com"
+        }).json({ message: "Login successful" });
     } catch (error) {
         console.error("❌ Error in login:", error);
         res.status(500).json({ message: "Server error" });
@@ -212,7 +222,11 @@ app.post("/api/auth/login", async (req, res) => {
 
 // ✅ Logout
 app.post("/api/auth/logout", (req, res) => {
-    res.clearCookie("token").json({ message: "Logged out" });
+    res.clearCookie("token", {
+        sameSite: "None",
+        secure: true,
+        domain: "psyguage-backend.onrender.com"
+    }).json({ message: "Logged out" });
 });
 
 // ✅ Save Game Scores
