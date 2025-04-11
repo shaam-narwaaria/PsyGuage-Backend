@@ -5,11 +5,13 @@ const cors = require("cors");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
+const User = require("./models/Users");
+
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 const MONGO_URI = process.env.MONGO_URI;
 const JWT_SECRET = process.env.JWT_SECRET || "supersecretjwtkey123";
-const User = require("./models/User");
 
 // Middleware
 app.use(cors({
@@ -28,10 +30,16 @@ app.get("/", (req, res) => {
 });
 
 // user count
-app.get("/user-count", async (req, res) => {
-    const count = await User.countDocuments();
-    res.send(`Total users: ${count}`);
-  });
+app.get('/user-count', async (req, res) => {
+    try {
+        const count = await User.countDocuments();
+        res.send(`Total users: ${count}`);
+    } catch (err) {
+        console.error('Error fetching user count:', err);
+        res.status(500).send('Server error');
+    }
+});
+
 
 // ✅ Connect to MongoDB
 mongoose.connect(MONGO_URI)
