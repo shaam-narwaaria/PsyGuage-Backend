@@ -1,10 +1,9 @@
-require("dotenv").config(); // Load environment variables from .env
+require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const cookieParser = require("cookie-parser");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -21,7 +20,6 @@ app.use(cors({
     credentials: true
 }));
 app.use(express.json());
-app.use(cookieParser());
 
 // ✅ Root Route
 app.get("/", (req, res) => {
@@ -36,7 +34,7 @@ mongoose.connect(MONGO_URI)
         process.exit(1);
     });
 
-// ✅ Define User Schema and Model
+// ✅ User Schema
 const userSchema = new mongoose.Schema({
     name: String,
     email: { type: String, unique: true },
@@ -44,7 +42,7 @@ const userSchema = new mongoose.Schema({
 });
 const Users = mongoose.model("Users", userSchema);
 
-// ✅ Define Score Schema and Model
+// ✅ Score Schema
 const scoreSchema = new mongoose.Schema({
     gameName: String,
     name: String,
@@ -79,7 +77,7 @@ app.post("/api/auth/register", async (req, res) => {
     }
 });
 
-// ✅ Login
+// ✅ Login (Send Token in Response)
 app.post("/api/auth/login", async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -91,13 +89,9 @@ app.post("/api/auth/login", async (req, res) => {
 
         const token = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: "1h" });
 
-        res.cookie("token", token, {
-            httpOnly: true,
-            sameSite: "None",
-            secure: true,
-            domain: "psyguage-backend.onrender.com"
-        }).json({
+        res.json({
             message: "Login successful",
+            token,
             user: {
                 name: user.name,
                 email: user.email
@@ -109,17 +103,30 @@ app.post("/api/auth/login", async (req, res) => {
     }
 });
 
+// ✅ Verify Token
+app.get("/api/auth/verify", (req, res) => {
+    const authHeader = req.headers.authorization;
+    const token = authHeader && authHeader.split(" ")[1];
 
-// ✅ Logout
-app.post("/api/auth/logout", (req, res) => {
-    res.clearCookie("token", {
-        sameSite: "None",
-        secure: true,
-        domain: "psyguage-backend.onrender.com"
-    }).json({ message: "Logged out" });
+    if (!token) {
+        return res.status(401).json({ message: "No token provided" });
+    }
+
+    try {
+        const decoded = jwt.verify(token, JWT_SECRET);
+        res.json({ user: decoded });
+    } catch (err) {
+        console.error("❌ Token verification error:", err);
+        res.status(401).json({ message: "Invalid token" });
+    }
 });
 
-// ✅ Save Game Scores
+// ✅ Logout (No-op for token-based auth)
+app.post("/api/auth/logout", (req, res) => {
+    res.json({ message: "Logged out" });
+});
+
+// ✅ Save Score
 app.post("/api/scores", async (req, res) => {
     try {
         const { gameName, name, email, score, responseSymbolTime, correctSymbolCount } = req.body;
