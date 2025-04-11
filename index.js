@@ -9,6 +9,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const MONGO_URI = process.env.MONGO_URI;
 const JWT_SECRET = process.env.JWT_SECRET || "supersecretjwtkey123";
+const User = require("./models/User");
 
 // Middleware
 app.use(cors({
@@ -25,6 +26,12 @@ app.use(express.json());
 app.get("/", (req, res) => {
     res.send("This is PsyGuage Backend API!");
 });
+
+// user count
+app.get("/user-count", async (req, res) => {
+    const count = await User.countDocuments();
+    res.send(`Total users: ${count}`);
+  });
 
 // ✅ Connect to MongoDB
 mongoose.connect(MONGO_URI)
