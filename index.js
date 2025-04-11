@@ -6,6 +6,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
 const User = require("./models/Users");
+const feedbackRoutes = require("./routes/feedback");
 
 
 const app = express();
@@ -39,6 +40,10 @@ app.get('/user-count', async (req, res) => {
         res.status(500).send('Server error');
     }
 });
+
+
+app.use("/api/feedback", feedbackRoutes);
+
 
 
 // ✅ Connect to MongoDB
